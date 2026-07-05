@@ -7,9 +7,12 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 app = FastAPI()
 
+origins = [
+    "https://rani021101.github.io",
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://rani021101.github.io/agreement_frontend/"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

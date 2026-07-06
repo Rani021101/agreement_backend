@@ -30,86 +30,46 @@ class Login(BaseModel):
     emp_id: str
     password: str
 
-# @router.post("/login")
-# def login(data: Login):
-
-#     conn = get_connection()
-#     cur = conn.cursor()
-
-#     cur.execute(
-#         """
-#         SELECT emp_id,name,password
-#         FROM users
-#         WHERE emp_id=%s
-#         """,
-#         (data.emp_id,)
-#     )
-
-#     user = cur.fetchone()
-
-#     if not user:
-#         raise HTTPException(
-#             status_code=401,
-#             detail="Invalid credentials"
-#         )
-
-#     if user[2] != data.password:
-#         raise HTTPException(
-#             status_code=401,
-#             detail="Invalid credentials"
-#         )
-
-#     token = create_access_token({
-#         "emp_id": user[0],
-#         "name": user[1]
-#     })
-
-#     return {
-#         "token": token,
-#         "emp_id": user[0],
-#         "name": user[1]
-#     }
-
 @router.post("/login")
 def login(data: Login):
 
-    try:
-        conn = get_connection()
-        cur = conn.cursor()
+    conn = get_connection()
+    cur = conn.cursor()
 
-        cur.execute(
-            """
-            SELECT emp_id,name,password
-            FROM users
-            WHERE emp_id=%s
-            """,
-            (data.emp_id,)
+    cur.execute(
+        """
+        SELECT emp_id,name,password
+        FROM users
+        WHERE emp_id=%s
+        """,
+        (data.emp_id,)
+    )
+
+    user = cur.fetchone()
+
+    if not user:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid credentials"
         )
 
-        user = cur.fetchone()
+    if user[2] != data.password:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid credentials"
+        )
 
-        print("USER:", user)
+    token = create_access_token({
+        "emp_id": user[0],
+        "name": user[1]
+    })
 
-        if not user:
-            raise HTTPException(
-                status_code=401,
-                detail="Invalid credentials"
-            )
+    return {
+        "token": token,
+        "emp_id": user[0],
+        "name": user[1]
+    }
 
-        token = create_access_token({
-            "emp_id": user[0],
-            "name": user[1]
-        })
-
-        return {
-            "token": token,
-            "emp_id": user[0],
-            "name": user[1]
-        }
-
-    except Exception as e:
-        print("LOGIN ERROR:", str(e))
-        raise
 
 from fastapi import Header, HTTPException
 from jose import jwt, JWTError

@@ -24,6 +24,5 @@ load_dotenv()
 
 def get_connection():
     return psycopg2.connect(
-        # "postgresql://postgres:d8MGwz48Agn2LADe@db.lobfdenviwhbaqclxrmf.supabase.co:5432/postgres"
-        "postgresql://postgres.lobfdenviwhbaqclxrmf:d8MGwz48Agn2LADe@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres"
+        os.getenv("DATABASE_URL")
     )

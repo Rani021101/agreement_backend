@@ -24,5 +24,5 @@ load_dotenv()
 
 def get_connection():
     return psycopg2.connect(
-        os.getenv("DATABASE_URL")
+        "postgresql://postgres:d8MGwz48Agn2LADe@db.lobfdenviwhbaqclxrmf.supabase.co:5432/postgres"
     )

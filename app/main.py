@@ -27,8 +27,8 @@ def start_scheduler():
     scheduler.add_job(
         check_agreement_reminders,
         "cron",
-        hour=23,
-        minute=30 # your database connection
+        hour=1,
+        minute=0 # your database connection
     )
     scheduler.start()
 

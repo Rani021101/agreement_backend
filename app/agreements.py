@@ -692,3 +692,7 @@ def export_agreements():
         file_path,
         filename="agreements.xlsx"
     )
+
+@router.get("/health")
+async def health():
+    return {"status": "ok"}

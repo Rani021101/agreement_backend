@@ -1,15 +1,13 @@
-from fastapi import APIRouter
-from .db import get_connection
-from .remainder import create_reminder_email, send_email
-from fastapi import HTTPException
+from fastapi import APIRouter, HTTPException
 from psycopg.errors import UniqueViolation
 from typing import Optional
 from pydantic import BaseModel
 from datetime import date, timedelta
-from .auth import verify_token
-from datetime import timedelta
 from fastapi import Depends
 from fastapi.responses import FileResponse
+from .db import get_connection
+from .remainder import create_reminder_email, send_email
+from .auth import verify_token
 import pandas as pd
 import os
 
@@ -33,6 +31,7 @@ def test_db():
 
     return {"time": result}
 
+# agreements
 @router.post("/agreements")
 def add_agreement(data: dict,user = Depends(verify_token)):
 
@@ -91,16 +90,12 @@ def add_agreement(data: dict,user = Depends(verify_token)):
             "message": "Agreement Added Successfully"
         }
     except UniqueViolation:
-
         conn.rollback()
 
         raise HTTPException(
             status_code=400,
-            detail="Token Number already exists"
-        )
-
+            detail="Token Number already exists")
     finally:
-
         cur.close()
         conn.close()
 
@@ -141,7 +136,6 @@ def get_agreements(user = Depends(verify_token)):
             "total_pay": float(row[5]) if row[5] else 0,
             "renewal_date": str(row[6]) if row[6] else None
         })
-
     return agreements
 
 
@@ -181,7 +175,7 @@ def get_agreement(agreement_id: int, user = Depends(verify_token)):
         return {"message": "Agreement not found"}
     remaining = float(row[5] or 0) - float(row[6] or 0)
     return {
-        "sr_no": row[0],
+    "sr_no": row[0],
     "emp_id": row[1],
     "building_name": row[2],
     "token_no": row[3],
@@ -200,16 +194,13 @@ def get_agreement(agreement_id: int, user = Depends(verify_token)):
     }
 
 
-from pydantic import BaseModel
-
 class DeleteRequest(BaseModel):
     emp_id: str
 
 @router.delete("/agreements/{agreement_id}")
 def delete_agreement(
     agreement_id: int,
-    data: DeleteRequest,user = Depends(verify_token)
-):
+    data: DeleteRequest,user = Depends(verify_token)):
 
     conn = get_connection()
     cur = conn.cursor()
@@ -236,12 +227,10 @@ def delete_agreement(
     conn.close()
     add_activity( data.emp_id, "DELETE", f"Deleted agreement for {agreement[0]}", agreement_id)
 
-    return {
-        "message": "Agreement deleted successfully"
-    }
+    return {"message": "Agreement deleted successfully"}
+
 
 class Agreement(BaseModel):
-
     emp_id: Optional[str] = None
     building_name: str
     token_no: str
@@ -263,8 +252,7 @@ class Agreement(BaseModel):
 @router.put("/agreements/{agreement_id}")
 def update_agreement(
     agreement_id: int,
-    data: Agreement,user = Depends(verify_token)
-):
+    data: Agreement,user = Depends(verify_token)):
 
     conn = get_connection()
     cur = conn.cursor()
@@ -314,31 +302,23 @@ def update_agreement(
         "message": "Agreement updated successfully"
     }
 
-
+# Dashboad
 @router.get("/dashboard_stats")
 def dashboard_stats(user = Depends(verify_token)):
 
     conn = get_connection()
     cur = conn.cursor()
 
-    cur.execute(
-        "SELECT COUNT(*) FROM agreements"
-    )
+    cur.execute("SELECT COUNT(*) FROM agreements")
     total = cur.fetchone()[0]
 
-    cur.execute(
-        "SELECT COUNT(*) FROM agreements WHERE status='Pending'"
-    )
+    cur.execute("SELECT COUNT(*) FROM agreements WHERE status='Pending'")
     pending = cur.fetchone()[0]
 
-    cur.execute(
-        "SELECT COUNT(*) FROM agreements WHERE status='Registered'"
-    )
+    cur.execute("SELECT COUNT(*) FROM agreements WHERE status='Registered'")
     registered = cur.fetchone()[0]
 
-    cur.execute(
-        "SELECT COUNT(*) FROM agreements WHERE status='Cancel'"
-    )
+    cur.execute("SELECT COUNT(*) FROM agreements WHERE status='Cancel'")
     cancelled = cur.fetchone()[0]
 
     cur.execute(
@@ -512,131 +492,144 @@ def recent_activities():
         for row in rows
     ]
 
-
-
-
-
-
+# Remainders
 def check_agreement_reminders():
-    conn= get_connection()
-    today = date.today()
+    try:
+        conn= get_connection()
+        today = date.today()
 
-    cursor = conn.cursor()
+        cursor = conn.cursor()
 
-    cursor.execute("""
-        SELECT
-            sr_no,
-            building_name,
-            renewal_date,
-            reminder_status
-        FROM agreements
-        WHERE renewal_date IS NOT NULL
-    """)
+        cursor.execute("""
+            SELECT
+                sr_no,
+                building_name,
+                renewal_date,
+                reminder_status
+            FROM agreements
+            WHERE renewal_date IS NOT NULL
+        """)
 
-    agreements = cursor.fetchall()
+        agreements = cursor.fetchall()
 
-    for agreement in agreements:
+        for agreement in agreements:
 
-        sr_no = agreement[0]
-        building_name = agreement[1]
-        renewal_date = agreement[2]
-        reminder_status = agreement[3]
+            sr_no = agreement[0]
+            building_name = agreement[1]
+            renewal_date = agreement[2]
+            reminder_status = agreement[3]
 
-        days_left = (renewal_date - today).days
-        print(f"Building: {building_name}")
-        print(f"Renewal Date: {renewal_date}")
-        print(f"Days Left: {days_left}")
-        print(f"Reminder Status: {reminder_status}")
-        # 15 Days Reminder
-        if days_left == 15 and reminder_status < 1:
+            days_left = (renewal_date - today).days
+            print(f"Building: {building_name}")
+            print(f"Renewal Date: {renewal_date}")
+            print(f"Days Left: {days_left}")
+            print(f"Reminder Status: {reminder_status}")
+            
+            # 30 Days Reminder
+            if days_left <= 30 and days_left > 20 and reminder_status < 1:
 
-            send_email(
-                RECEIVER_EMAIL,
-                "Agreement Renewal Reminder - 15 Days Left",
-                create_reminder_email(
-                    building_name,
-                    renewal_date,
-                    15
+                send_email(
+                    RECEIVER_EMAIL,
+                    f"Agreement Renewal Reminder - {days_left} Days Left",
+                    create_reminder_email(
+                        building_name,
+                        renewal_date,
+                        days_left
+                    )
                 )
-            )
 
-            cursor.execute("""
-                UPDATE agreements
-                SET reminder_status = 1
-                WHERE sr_no = %s
-            """, (sr_no,))
+                cursor.execute("""
+                    UPDATE agreements
+                    SET reminder_status = 1
+                    WHERE sr_no = %s
+                """, (sr_no,))
 
-        # 7 Days Reminder
-        elif days_left == 7 and reminder_status < 2:
+            elif days_left == 15 and reminder_status < 2:
 
-            send_email(
-                RECEIVER_EMAIL,
-                "Agreement Renewal Reminder - 7 Days Left",
-                create_reminder_email(
-                    building_name,
-                    renewal_date,
-                    7
+                send_email(
+                    RECEIVER_EMAIL,
+                    "Agreement Renewal Reminder - 15 Days Left",
+                    create_reminder_email(
+                        building_name,
+                        renewal_date,
+                        15
+                    )
                 )
-            )
 
-            cursor.execute("""
-                UPDATE agreements
-                SET reminder_status = 2
-                WHERE sr_no = %s
-            """, (sr_no,))
+                cursor.execute("""
+                    UPDATE agreements
+                    SET reminder_status = 2
+                    WHERE sr_no = %s
+                """, (sr_no,))
 
-        # 1 Day Reminder
-        elif days_left == 1 and reminder_status < 3:
+            # 7 Days Reminder
+            elif days_left == 7 and reminder_status < 3:
 
-            send_email(
-                RECEIVER_EMAIL,
-                "Final Agreement Renewal Reminder",
-                create_reminder_email(
-                    building_name,
-                    renewal_date,
-                    1
+                send_email(
+                    RECEIVER_EMAIL,
+                    "Agreement Renewal Reminder - 7 Days Left",
+                    create_reminder_email(
+                        building_name,
+                        renewal_date,
+                        7
+                    )
                 )
-            )
 
-            cursor.execute("""
-                UPDATE agreements
-                SET reminder_status = 3
-                WHERE sr_no = %s
-            """, (sr_no,))
+                cursor.execute("""
+                    UPDATE agreements
+                    SET reminder_status = 3
+                    WHERE sr_no = %s
+                """, (sr_no,))
 
-        # Expired
-        elif days_left < 0 and reminder_status < 4:
+            # 1 Day Reminder
+            elif days_left == 1 and reminder_status < 4:
 
-            send_email(
-                RECEIVER_EMAIL,
-                "Agreement Expired",
-                create_reminder_email(
-                    building_name,
-                    renewal_date,
-                    0
+                send_email(
+                    RECEIVER_EMAIL,
+                    "Final Agreement Renewal Reminder",
+                    create_reminder_email(
+                        building_name,
+                        renewal_date,
+                        1
+                    )
                 )
-            )
 
-            cursor.execute("""
-                UPDATE agreements
-                SET reminder_status = 4
-                WHERE sr_no = %s
-            """, (sr_no,))
+                cursor.execute("""
+                    UPDATE agreements
+                    SET reminder_status = 4
+                    WHERE sr_no = %s
+                """, (sr_no,))
 
-    conn.commit()
-    cursor.close()
+            # Expired
+            elif days_left < 0 and reminder_status < 5:
 
-    conn.close()
+                send_email(
+                    RECEIVER_EMAIL,
+                    "Agreement Expired",
+                    create_reminder_email(
+                        building_name,
+                        renewal_date,
+                        0
+                    )
+                )
 
+                cursor.execute("""
+                    UPDATE agreements
+                    SET reminder_status = 5
+                    WHERE sr_no = %s
+                """, (sr_no,))
 
+        conn.commit()
+    finally:
+        cursor.close()
+        conn.close()
 
 @router.post("/send_reminders")
 def send_reminders():
     check_agreement_reminders()
     return {"message": "Reminders processed"}
 
-
-
+# Profile
 @router.get("/my_activities/{emp_id}")
 def my_activities(emp_id:str,   
 ):
@@ -693,6 +686,27 @@ def export_agreements():
         filename="agreements.xlsx"
     )
 
+
+
+sent_message_date = None
+
 @router.get("/health")
 async def health():
-    return {"status": "ok"}
+
+    global sent_message_date
+
+    current_date = date.today()
+
+    if current_date != sent_message_date:
+
+        check_agreement_reminders()
+
+        sent_message_date = current_date
+
+        return {
+            "status": "message sent"
+        }
+
+    return {
+        "status": "ok"
+    }

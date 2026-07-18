@@ -522,7 +522,7 @@ def check_agreement_reminders():
             days_left = (renewal_date - today).days
             print(f"Building: {building_name}")
             print(f"Renewal Date: {renewal_date}")
-            print(f"Days Left: {days_left}")
+            print(f"Days Left: {days_left}", type(days_left))
             print(f"Reminder Status: {reminder_status}")
             
             # 30 Days Reminder
@@ -545,17 +545,19 @@ def check_agreement_reminders():
                 """, (sr_no,))
 
             elif days_left <= 11 and days_left > 15 and reminder_status < 2:
-
-                send_email(
-                    RECEIVER_EMAIL,
-                    f"Agreement Renewal Reminder - {days_left} Days Left",
-                    create_reminder_email(
-                        building_name,
-                        renewal_date,
-                        days_left
+                try:
+                    send_email(
+                        RECEIVER_EMAIL,
+                        f"Agreement Renewal Reminder - {days_left} Days Left",
+                        create_reminder_email(
+                            building_name,
+                            renewal_date,
+                            days_left
+                        )
                     )
-                )
-
+                except Exception as e:
+                    print(e)
+                
                 cursor.execute("""
                     UPDATE agreements
                     SET reminder_status = 2

@@ -1,6 +1,6 @@
-from datetime import date
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+# from datetime import date
+# from email.mime.multipart import MIMEMultipart
+# from email.mime.text import MIMEText
 import resend
 import os
 
@@ -31,9 +31,7 @@ resend.api_key = os.getenv(
 
 
 def send_email(to_email, subject, html_body):
-
     try:
-
         response = resend.Emails.send(
             {
                 "from": "onboarding@resend.dev",
@@ -49,7 +47,6 @@ def send_email(to_email, subject, html_body):
             "Email sent successfully",
             response
         )
-
         return True
 
 

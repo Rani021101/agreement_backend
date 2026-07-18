@@ -1,30 +1,67 @@
 from datetime import date
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-import smtplib
+import resend
 import os
 
 RECEIVER_EMAIL= os.getenv("RECEIVER_EMAIL")
 SENDER_EMAIL = os.getenv("SENDER_EMAIL")
 APP_KEY=os.getenv("APP_KEY")
 
+# def send_email(to_email, subject, html_body):
+#     print("sender email", SENDER_EMAIL)
+#     try:
+#         msg = MIMEMultipart("alternative")
+#         msg["Subject"] = subject
+#         msg["From"] = SENDER_EMAIL
+#         msg["To"] = to_email
+
+#         msg.attach(MIMEText(html_body, "html"))
+
+#         with smtplib.SMTP("smtp.gmail.com", 587) as server:
+#             server.starttls()
+#             server.login(SENDER_EMAIL, APP_KEY)
+#             server.send_message(msg)
+#     except Exception as e:
+#         print(e)
+
+resend.api_key = os.getenv(
+    "RESEND_API_KEY"
+)
+
+
 def send_email(to_email, subject, html_body):
-    print("sender email", SENDER_EMAIL)
+
     try:
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = subject
-        msg["From"] = SENDER_EMAIL
-        msg["To"] = to_email
 
-        msg.attach(MIMEText(html_body, "html"))
+        response = resend.Emails.send(
+            {
+                "from": "onboarding@resend.dev",
+                "to": [
+                    to_email
+                ],
+                "subject": subject,
+                "html": html_body
+            }
+        )
 
-        with smtplib.SMTP("smtp.gmail.com", 587) as server:
-            server.starttls()
-            server.login(SENDER_EMAIL, APP_KEY)
-            server.send_message(msg)
+        print(
+            "Email sent successfully",
+            response
+        )
+
+        return True
+
+
     except Exception as e:
-        print(e)
 
+        print(
+            "Email error:",
+            e
+        )
+
+        return False
+    
 def create_reminder_email(building_name, renewal_date, days_left):
 
     return f"""

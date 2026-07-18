@@ -494,6 +494,7 @@ def recent_activities():
 
 # Remainders
 def check_agreement_reminders():
+    print("checking agreements")
     try:
         conn= get_connection()
         today = date.today()
@@ -545,8 +546,8 @@ def check_agreement_reminders():
                     WHERE sr_no = %s
                 """, (sr_no,))
 
-            elif days_left <= 15 and days_left > 11 and reminder_status < 2:
-                print("inside the if")
+            if days_left <= 15 and days_left > 11 and reminder_status < 2:
+                print("inside the if 15 days")
                 try:
                     send_email(
                         RECEIVER_EMAIL,
@@ -557,14 +558,13 @@ def check_agreement_reminders():
                             days_left
                         )
                     )
+                    cursor.execute("""
+                        UPDATE agreements
+                        SET reminder_status = 2
+                        WHERE sr_no = %s
+                    """, (sr_no,))
                 except Exception as e:
                     print(e)
-                
-                cursor.execute("""
-                    UPDATE agreements
-                    SET reminder_status = 2
-                    WHERE sr_no = %s
-                """, (sr_no,))
 
             # 7 Days Reminder
             elif days_left == 7 and reminder_status < 3:
@@ -702,7 +702,7 @@ async def health():
     current_date = date.today()
     print("sent_message_date", sent_message_date)
     if current_date != sent_message_date:
-
+        print("inside health check if")
         check_agreement_reminders()
 
         sent_message_date = current_date

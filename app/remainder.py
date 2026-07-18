@@ -9,18 +9,21 @@ SENDER_EMAIL = os.getenv("SENDER_EMAIL")
 APP_KEY=os.getenv("APP_KEY")
 
 def send_email(to_email, subject, html_body):
+    print("sender email", SENDER_EMAIL)
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = SENDER_EMAIL
+        msg["To"] = to_email
 
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = subject
-    msg["From"] = SENDER_EMAIL
-    msg["To"] = to_email
+        msg.attach(MIMEText(html_body, "html"))
 
-    msg.attach(MIMEText(html_body, "html"))
-
-    with smtplib.SMTP("smtp.gmail.com", 587) as server:
-        server.starttls()
-        server.login(SENDER_EMAIL, APP_KEY)
-        server.send_message(msg)
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.starttls()
+            server.login(SENDER_EMAIL, APP_KEY)
+            server.send_message(msg)
+    except Exception as e:
+        print(e)
 
 def create_reminder_email(building_name, renewal_date, days_left):
 

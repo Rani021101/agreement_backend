@@ -524,6 +524,7 @@ def check_agreement_reminders():
             print(f"Renewal Date: {renewal_date}")
             print(f"Days Left: {days_left}", type(days_left))
             print(f"Reminder Status: {reminder_status}")
+            print("receiver",RECEIVER_EMAIL)
             
             # 30 Days Reminder
             if days_left <= 30 and days_left > 20 and reminder_status < 1:
@@ -545,6 +546,7 @@ def check_agreement_reminders():
                 """, (sr_no,))
 
             elif days_left <= 15 and days_left > 11 and reminder_status < 2:
+                print("inside the if")
                 try:
                     send_email(
                         RECEIVER_EMAIL,

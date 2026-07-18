@@ -544,15 +544,15 @@ def check_agreement_reminders():
                     WHERE sr_no = %s
                 """, (sr_no,))
 
-            elif days_left == 15 and reminder_status < 2:
+            elif days_left <= 11 and days_left > 15 and reminder_status < 2:
 
                 send_email(
                     RECEIVER_EMAIL,
-                    "Agreement Renewal Reminder - 15 Days Left",
+                    f"Agreement Renewal Reminder - {days_left} Days Left",
                     create_reminder_email(
                         building_name,
                         renewal_date,
-                        15
+                        days_left
                     )
                 )
 

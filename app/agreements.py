@@ -544,7 +544,7 @@ def check_agreement_reminders():
                     WHERE sr_no = %s
                 """, (sr_no,))
 
-            elif days_left <= 11 and days_left > 15 and reminder_status < 2:
+            elif days_left <= 15 and days_left > 11 and reminder_status < 2:
                 try:
                     send_email(
                         RECEIVER_EMAIL,
@@ -698,7 +698,7 @@ async def health():
     global sent_message_date
 
     current_date = date.today()
-
+    print("sent_message_date", sent_message_date)
     if current_date != sent_message_date:
 
         check_agreement_reminders()
